@@ -92,7 +92,6 @@ bool operator>=(pos d1, pos d2)
 int cal_cost(int*map, int*cost, int row, int col, pos s, pos e);
 
 int dir[4][2] = { { 1,0 },{ 0,1 },{ -1,0 },{ 0,-1 } };
-PQType<pos> que(MAX_MAP);
 
 
 int main(void)
@@ -135,6 +134,8 @@ int main(void)
 
 int cal_cost(int*map, int*cost, int row, int col, pos s, pos e)
 {
+	register PQType<pos> que(MAX_MAP);
+
 	memset(cost, -1, sizeof(int)*row*col);
 	cost[s.y*col + s.x] = 0;
 
@@ -173,8 +174,5 @@ int cal_cost(int*map, int*cost, int row, int col, pos s, pos e)
 				continue;
 		}
 	}
-	while (!que.IsEmpty())
-		que.Dequeue(tmp);
-
 	return cost[e.y*col + e.x];
 }
