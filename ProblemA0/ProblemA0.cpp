@@ -1,11 +1,77 @@
 #include <iostream>
-#include <queue>
 #include <cstring>
 #include <cstdio>
 
+#define MAX 5000
+#define MAX_MAP 400
+
 using namespace std;
 
-#define MAX 5000
+
+
+template <class ItemType>
+void Swap(ItemType& one, ItemType& two)
+{
+	ItemType temp;
+	temp = one;
+	one = two;
+	two = temp;
+}
+
+template<class ItemType>
+struct HeapType
+{
+	void ReheapDown(int root, int bottom)
+	{
+		int maxChild;
+		int rightChild;
+		int leftChild;
+
+		leftChild = root * 2 + 1;
+		rightChild = root * 2 + 2;
+		if (leftChild <= bottom)
+		{
+			if (leftChild == bottom)
+				maxChild = leftChild;
+			else
+			{
+				if (elements[leftChild] >= elements[rightChild])
+					maxChild = rightChild;
+				else
+					maxChild = leftChild;
+			}
+			if (elements[root] > elements[maxChild])
+			{
+				Swap(elements[root], elements[maxChild]);
+				ReheapDown(maxChild, bottom);
+			}
+		}
+	}
+	void ReheapUp(int root, int bottom)
+	{
+		int parent;
+
+		if (bottom > root)
+		{
+			parent = (bottom - 1) / 2;
+			if (elements[parent] > elements[bottom])
+			{
+				Swap(elements[parent], elements[bottom]);
+				ReheapUp(root, parent);
+			}
+		}
+	}
+	ItemType* elements;
+	int numElements;
+};
+
+
+class FullPQ {};class EmptyPQ {};
+template<class ItemType>class PQType{public:	PQType(int max)	{		maxItems = max;		items.elements = new ItemType[max];		length = 0;	}	~PQType()	{		delete[] items.elements;	}	void MakeEmpty()	{		length = 0;	}	bool IsEmpty() const	{		return length == 0;	}	bool IsFull() const	{		return length == maxItems;	}	void Enqueue(ItemType newItem)	{		if (length == maxItems)			throw FullPQ();		else		{			length++;			items.elements[length - 1] = newItem;			items.ReheapUp(0, length - 1);		}	}	void Dequeue(ItemType& item)	{		if (length == 0)			throw EmptyPQ();		else		{			item = items.elements[0];			items.elements[0] = items.elements[length - 1];			length--;			items.ReheapDown(0, length - 1);		}	}private:	int length;	HeapType<ItemType> items;	int maxItems;};
+
+
+
+
 
 typedef struct pos
 {
@@ -13,13 +79,20 @@ typedef struct pos
 	int y;
 	int cost;
 }pos;
+bool operator>(pos d1, pos d2)
+{
+	return d1.cost > d2.cost;
+}
+bool operator>=(pos d1, pos d2)
+{
+	return d1.cost >= d2.cost;
+}
 
-bool operator>(pos d1, pos d2);
-pos out();
+
 int cal_cost(int*map, int*cost, int row, int col, pos s, pos e);
 
 int dir[4][2] = { { 1,0 },{ 0,1 },{ -1,0 },{ 0,-1 } };
-priority_queue<pos, vector<pos>, greater<pos>> que;
+PQType<pos> que(MAX_MAP);
 
 
 int main(void)
@@ -60,35 +133,21 @@ int main(void)
 	return 0;
 }
 
-
-bool operator>(pos d1, pos d2)
-{
-	return d1.cost > d2.cost;
-}
-
-
-pos out()
-{
-	pos tmp = que.top();
-	que.pop();
-	return tmp;
-}
-
 int cal_cost(int*map, int*cost, int row, int col, pos s, pos e)
 {
 	memset(cost, -1, sizeof(int)*row*col);
 	cost[s.y*col + s.x] = 0;
 
 	pos tmp = { s.x, s.y, 0 };
-	que.push(tmp);
+	que.Enqueue(tmp);
 
-	while (!que.empty())
+	while (!que.IsEmpty())
 	{
-		pos cur = out();
-		if (cur.x == e.x && cur.y == e.y)
-			break;
+		que.Dequeue(tmp);
+		int x = tmp.x, y = tmp.y;
 
-		int x = cur.x, y = cur.y;
+		if (x == e.x && y == e.y)
+			break;
 		int nx = 0, ny = 0;
 
 		for (int i = 0; i < 4; i++)
@@ -106,7 +165,7 @@ int cal_cost(int*map, int*cost, int row, int col, pos s, pos e)
 						continue;
 					cost[ny*col + nx] = cost[y*col + x] + map[ny*col + nx];
 					pos tmp = { nx,ny,cost[ny*col + nx] };
-					que.push(tmp);
+					que.Enqueue(tmp);
 				}
 				else
 					continue;
@@ -114,8 +173,8 @@ int cal_cost(int*map, int*cost, int row, int col, pos s, pos e)
 				continue;
 		}
 	}
-	while (que.size())
-		que.pop();
+	while (!que.IsEmpty())
+		que.Dequeue(tmp);
 
 	return cost[e.y*col + e.x];
 }
