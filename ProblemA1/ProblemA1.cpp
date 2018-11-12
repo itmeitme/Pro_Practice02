@@ -65,6 +65,9 @@ int main(void)
 	if (bstotal >= npptotal[N - 1]) dfs(0, bstotal);
 	else result = -1;
 	cout << result << endl;
-
+	delete(bship);
+	delete(visited);
+	delete(npp);
+	delete(npptotal);
 	return 0;
 }
